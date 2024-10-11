@@ -4,25 +4,19 @@ from typing import Optional
 
 pokeBaseURL = "https://pokeapi.co/api/v2/"
 
-def fetch_pokemon_data(pokemonName: str) -> Optional[dict]:
-    pokemonName = pokemonName.lower()
-    pokemonEndpoint = pokeBaseURL + f"pokemon/{pokemonName}"
+def fetch_pokemon_data(identifier):
+    if isinstance(identifier, int):
+        url = f"{pokeBaseURL}pokemon/{identifier}"
+    else:
+        url = f"{pokeBaseURL}pokemon/{identifier.lower()}"
+    
     try:
-        response = requests.get(pokemonEndpoint)
+        response = requests.get(url)
         response.raise_for_status()
         return response.json()
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
-            print("Pokemon not found")
-        else:
-            print(f"HTTP error occurred: {e}")
     except requests.exceptions.RequestException as e:
-        print(f"Network error occurred: {e}")
-    except ValueError as e:
-        print(f"JSON decoding error: {e}")
-    except Exception as e: 
-        print(f"An unexpected error occurred: {e}")    
-    return None
+        print(f"An error occurred: {e}")
+        return None
 
 
 def process_pokemon_data(json_data: dict) -> dict:
@@ -67,17 +61,23 @@ def display_pokemon_submenu() -> str:
     return user_response
 
 def fetch_and_display_pokemon():
-    pokemon_name = input("Enter Pokémon name: ")
+    user_input = input("Enter Pokémon name or ID: ").strip()
     print("\n")
-    response = fetch_pokemon_data(pokemon_name)
+    if user_input.isdigit():
+        print("Searching by Pokémon ID...")
+        pokemon_identifier = int(user_input)
+    else:
+        print("Searching by Pokémon name...")
+        pokemon_identifier = user_input.lower()
+    response = fetch_pokemon_data(pokemon_identifier)
     if response:
         processed_data = process_pokemon_data(response)
         if processed_data:
             display_pokemon_data(processed_data)
         else:
             print("Error processing Pokémon data.")
-    else: 
-        print("Failed to fetch Pokémon data.")
+    else:
+        print(f"Failed to fetch Pokémon data for '{user_input}'.")
 
 def main():
     while True:
